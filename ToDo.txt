@@ -1,0 +1,11 @@
+CRUD pra usuarios, clientes, produtos e vendas já estão concluidos. lógica e funcionamento estão funcionando como esperado. 
+
+
+Aprende a fazer testes..
+
+- verificações
+- segurança
+- JWT
+- Limpar comentarios
+- Read.me
+- testes
