@@ -1,4 +1,6 @@
 import express from "express";
+import { userSchema } from "../validations/userSchema.js";
+import { validate } from "../middlewares/validate.js";
 
 //importa as funções que contém as querys SQL
 import {
@@ -24,7 +26,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-//Route to fetch a user by ID
+//Rota para puxar usuário por ID.
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -44,11 +46,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Route to create a new user
-router.post("/", async (req, res) => {
+//Rota para criar novo usuário
+router.post("/", validate(userSchema), async (req, res) => {
   try {
     const { name, email, password, number } = req.body;
-    // Adicionar validação de dados aqui, se necessário
     const newUserId = await createUser({ name, email, password, number });
     res.status(201).json({
       message: "Usuário criado com sucesso!",
