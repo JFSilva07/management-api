@@ -40,12 +40,25 @@ export const createUser = ({ name, email, password, number }) => {
   });
 };
 
-//Function to update a user by ID
-export const updateUser = (id, { name, email, password, number }) => {
+//Função para atualizar um usuário pelo ID.
+export const updateUser = (id, data) => {
   return new Promise((resolve, reject) => {
-    const sql =
-      "UPDATE users SET name = ?, email = ?, password = ?, number = ? WHERE id = ?";
-    db.query(sql, [name, email, password, number, id], (error, results) => {
+    // Remove campos nulos, vazios ou undefined
+    const fields = Object.entries(data).filter(
+      ([_, v]) => v !== "" && v !== null && v !== undefined
+    );
+
+    if (fields.length === 0) {
+      return resolve(0); // nenhum campo para atualizar
+    }
+
+    // Monta dinamicamente a query
+    const setClause = fields.map(([key]) => `${key} = ?`).join(", ");
+    const values = fields.map(([_, value]) => value);
+
+    const sql = `UPDATE users SET ${setClause} WHERE id = ?`;
+
+    db.query(sql, [...values, id], (error, results) => {
       if (error) {
         return reject(error);
       }
