@@ -1,8 +1,6 @@
 import express from "express";
-//Helps to create routes in a modular and organized way
-const router = express.Router();
-
-//Import the functions that contain the SQL queries
+import { validate, validateClientData } from "../middlewares/validate.js";
+import { updateClientSchema } from "../validations/clientSchema.js";
 import {
   getAllClients,
   getClientById,
@@ -11,7 +9,9 @@ import {
   deleteClient,
 } from "../models/client.js";
 
-//Route to fetch all clients
+const router = express.Router();
+
+// GET all clients
 router.get("/", async (req, res) => {
   try {
     const clients = await getAllClients();
@@ -22,14 +22,16 @@ router.get("/", async (req, res) => {
   }
 });
 
-//Route to fetch a client by ID
+// GET client by ID
 router.get("/:id", async (req, res) => {
+  if (isNaN(req.params.id)) {
+    return res.status(400).json({ error: "ID inválido. Deve ser um número." });
+  }
   try {
     const { id } = req.params;
     const client = await getClientById(id);
-    if (!client) {
+    if (!client)
       return res.status(404).json({ error: "Cliente não encontrado" });
-    }
     res.status(200).json(client);
   } catch (error) {
     console.error("Erro ao buscar cliente:", error);
@@ -37,42 +39,41 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Route to create a new client
-router.post("/", async (req, res) => {
+// POST create client
+router.post("/", validateClientData, async (req, res) => {
   try {
-    const { name, email, number, adress, cpf } = req.body;
-    // Adicionar validação de dados aqui, se necessário
+    const { name, email, number, address, cpf } = req.body;
     const newClientId = await createClient({
       name,
       email,
       number,
-      adress,
+      address,
       cpf,
     });
-    res.status(201).json({
-      message: "Cliente criado com sucesso!",
-      ClientId: newClientId,
-    });
+    res
+      .status(201)
+      .json({ message: "Cliente criado com sucesso!", ClientId: newClientId });
   } catch (error) {
-    console.error("Erro ao inserir novo cliente :", error);
+    console.error("Erro ao inserir novo cliente:", error);
     res.status(500).json({ error: "Erro interno do servidor." });
   }
 });
 
-// Route to update a client by ID
-router.put("/:id", async (req, res) => {
+// PUT update client by ID
+router.put("/:id", validate(updateClientSchema), async (req, res) => {
+  if (isNaN(req.params.id)) {
+    return res.status(400).json({ error: "ID inválido. Deve ser um número." });
+  }
   try {
     const { id } = req.params;
-    const { email, number, adress } = req.body;
-    const affectedRows = await updateClient(id, {
-      email,
-      number,
-      adress,
+    const updates = {};
+    ["email", "number", "address"].forEach((field) => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
 
-    if (affectedRows === 0) {
+    const affectedRows = await updateClient(id, updates);
+    if (affectedRows === 0)
       return res.status(404).json({ error: "Cliente não encontrado" });
-    }
 
     res.status(200).json({ message: "Cliente atualizado com sucesso!" });
   } catch (error) {
@@ -81,15 +82,16 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-//Route to delete a client by ID
+// DELETE client by ID
 router.delete("/:id", async (req, res) => {
+  if (isNaN(req.params.id)) {
+    return res.status(400).json({ error: "ID inválido. Deve ser um número." });
+  }
   try {
     const { id } = req.params;
     const affectedRows = await deleteClient(id);
-
-    if (affectedRows === 0) {
+    if (affectedRows === 0)
       return res.status(404).json({ error: "Cliente não encontrado" });
-    }
 
     res.status(200).json({ message: "Cliente deletado com sucesso!" });
   } catch (error) {
@@ -97,5 +99,5 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
-// Export the router to be used in the main app
+
 export default router;

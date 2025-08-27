@@ -11,6 +11,8 @@ Aprende a fazer testes..
 - testes
 
 
+Verificações concluidas:
+
+Users
 
 
-coorigir numero de telefone criação de usuários.

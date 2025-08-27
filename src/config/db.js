@@ -1,7 +1,8 @@
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
 import { env } from "./env.js";
 
-const db = mysql.createConnection({
+// Cria um pool de conexões
+const db = mysql.createPool({
   host: env.db.host,
   port: env.db.port,
   user: env.db.user,
@@ -12,16 +13,17 @@ const db = mysql.createConnection({
   queueLimit: 0,
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error("Error connecting to the database:", err);
-    return;
+// Função para testar a conexão
+const testConnection = async () => {
+  try {
+    const [rows] = await db.query("SELECT 1");
+    console.log("✅ Conexão com o banco de dados funcionando!");
+  } catch (err) {
+    console.error("❌ Erro ao conectar com o banco de dados:", err);
   }
-  console.log("Connected to the database successfully!");
-});
-export default db;
+};
 
-// This code establishes a connection to a MySQL database using the mysql2 package.
-// It specifies the host, user, password, database name, and port.
-// If the connection is successful, it logs a success message; otherwise, it logs an error message.
-// The connection is exported for use in other parts of the application.
+// Executa o teste imediatamente ao importar
+testConnection();
+
+export default db;

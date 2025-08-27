@@ -1,68 +1,57 @@
 import db from "../config/db.js";
 
-//Function to fetch all clients
-export const getAllClients = () => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM clients";
-    db.query(sql, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
+// 🔹 Função para buscar todos os clientes
+export const getAllClients = async () => {
+  const [rows] = await db.query("SELECT * FROM clients");
+  return rows;
 };
 
-//Function to fetch a clients by ID
-export const getClientById = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM clients WHERE id = ?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results[0]);
-    });
-  });
+// 🔹 Função para buscar um cliente por ID
+export const getClientById = async (id) => {
+  const [rows] = await db.query("SELECT * FROM clients WHERE id = ?", [id]);
+  return rows[0];
 };
 
-//Function to create a new client
-export const createClient = ({ name, email, number, adress, cpf }) => {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "INSERT INTO clients (name, email , number, adress, cpf) VALUES (?, ?, ?, ?, ?)";
-    db.query(sql, [name, email, number, adress, cpf], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.insertId);
-    });
-  });
+// 🔹 Função para criar um novo cliente
+export const createClient = async ({ name, email, number, address, cpf }) => {
+  const sql =
+    "INSERT INTO clients (name, email, number, cpf, address) VALUES (?, ?, ?, ?, ?)";
+
+  const values = [name, email, number, cpf, JSON.stringify(address)];
+
+  const [result] = await db.query(sql, values);
+  return result.insertId;
 };
 
-//Function to update a client by ID
-export const updateClient = (id, { email, number, adress }) => {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "UPDATE clients SET email = ?, number = ?, adress = ? WHERE id = ?";
-    db.query(sql, [email, number, adress, id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.affectedRows);
-    });
-  });
+// 🔹 Função para atualizar um cliente por ID
+export const updateClient = async (id, { email, number, address }) => {
+  const fields = [];
+  const values = [];
+
+  if (email !== undefined) {
+    fields.push("email = ?");
+    values.push(email);
+  }
+  if (number !== undefined) {
+    fields.push("number = ?");
+    values.push(number);
+  }
+  if (address !== undefined) {
+    fields.push("address = ?");
+    values.push(JSON.stringify(address));
+  }
+
+  if (fields.length === 0) return 0;
+
+  const sql = `UPDATE clients SET ${fields.join(", ")} WHERE id = ?`;
+  values.push(id);
+
+  const [result] = await db.query(sql, values);
+  return result.affectedRows;
 };
 
-//Function to delete a client by ID
-export const deleteClient = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "DELETE FROM clients WHERE id = ?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.affectedRows);
-    });
-  });
+// 🔹 Função para deletar um cliente por ID
+export const deleteClient = async (id) => {
+  const [result] = await db.query("DELETE FROM clients WHERE id = ?", [id]);
+  return result.affectedRows;
 };

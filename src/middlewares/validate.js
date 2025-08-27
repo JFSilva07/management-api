@@ -1,21 +1,43 @@
-//validate recebe um schema do Joi e devolve um middleware do Express.
-export const validate = (schema) => (req, res, next) => {
-  //Valida o corpo da requisição conforme o schema.
-  //abortEarly: false faz o Joi acumular todos os erros em vez de parar no primeiro,permitindo retornar uma lista completa para o cliente.
-  //O retorno tem { value, error, warning }; aqui você só usa error.
-  const { error } = schema.validate(req.body, { abortEarly: false });
+import { clientSchema, cepExists } from "../validations/clientSchema.js";
+import db from "../config/db.js";
 
+// Middleware genérico para qualquer schema
+export const validate = (schema) => (req, res, next) => {
+  const { error } = schema.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({
       message: "Erro de validação",
-      //error.details é um array com cada falha de validação.
       errors: error.details.map((err) => ({
         field: err.path.join("."),
-        //err.message é a mensagem gerada pelo Joi (pode ser customizada no schema em .messages()).
         message: err.message,
       })),
     });
   }
-  //Só é executado se não houver erro, liberando o fluxo para o próximo middleware
   next();
+};
+
+// Middleware unificado para criação de cliente
+export const validateClientData = async (req, res, next) => {
+  try {
+    // 1️⃣ Validar schema completo
+    await clientSchema.validateAsync(req.body, { abortEarly: false });
+
+    // 2️⃣ Verificar CPF duplicado
+    const [rows] = await db.query("SELECT id FROM clients WHERE cpf = ?", [
+      req.body.cpf,
+    ]);
+    if (rows.length > 0)
+      return res.status(400).json({ error: "CPF já cadastrado." });
+
+    // 3️⃣ Validar CEP via API
+    const isValidCep = await cepExists(req.body.address.cep);
+    if (!isValidCep)
+      return res.status(400).json({ error: "CEP não encontrado." });
+
+    next();
+  } catch (err) {
+    return res.status(400).json({
+      error: err.details ? err.details.map((e) => e.message) : err.message,
+    });
+  }
 };

@@ -1,81 +1,44 @@
 import db from "../config/db.js";
 
-//Function to fetch all users
-export const getAllUsers = () => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM users";
-    db.query(sql, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
+// Buscar todos os usuários
+export const getAllUsers = async () => {
+  const [rows] = await db.query("SELECT * FROM users");
+  return rows;
 };
 
-//Function to fetch a user by ID
-export const getUserById = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM users WHERE id = ?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results[0]);
-    });
-  });
+// Buscar usuário por ID
+export const getUserById = async (id) => {
+  const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
+  return rows[0];
 };
 
-//Function to create a new user
-export const createUser = ({ name, email, password, number }) => {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "INSERT INTO users (name, email, password, number) VALUES (?, ?, ?, ?)";
-    db.query(sql, [name, email, password, number], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.insertId);
-    });
-  });
+// Criar usuário
+export const createUser = async ({ name, email, password, number }) => {
+  const [result] = await db.query(
+    "INSERT INTO users (name, email, password, number) VALUES (?, ?, ?, ?)",
+    [name, email, password, number]
+  );
+  return result.insertId;
 };
 
-//Função para atualizar um usuário pelo ID.
-export const updateUser = (id, data) => {
-  return new Promise((resolve, reject) => {
-    // Remove campos nulos, vazios ou undefined
-    const fields = Object.entries(data).filter(
-      ([_, v]) => v !== "" && v !== null && v !== undefined
-    );
+// Atualizar usuário
+export const updateUser = async (id, fields) => {
+  // Cria dinamicamente SET conforme os campos enviados
+  const keys = Object.keys(fields);
+  if (keys.length === 0) return 0;
 
-    if (fields.length === 0) {
-      return resolve(0); // nenhum campo para atualizar
-    }
+  const values = keys.map((key) => fields[key]);
+  const setString = keys.map((key) => `${key} = ?`).join(", ");
 
-    // Monta dinamicamente a query
-    const setClause = fields.map(([key]) => `${key} = ?`).join(", ");
-    const values = fields.map(([_, value]) => value);
-
-    const sql = `UPDATE users SET ${setClause} WHERE id = ?`;
-
-    db.query(sql, [...values, id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.affectedRows);
-    });
-  });
+  const [result] = await db.query(
+    `UPDATE users SET ${setString} WHERE id = ?`,
+    [...values, id]
+  );
+  return result.affectedRows;
 };
 
-//Function to delete a user by ID
-export const deleteUser = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "DELETE FROM users WHERE id = ?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.affectedRows);
-    });
-  });
+// Deletar usuário
+export const deleteUser = async (id) => {
+  const [result] = await db.query("DELETE FROM users WHERE id = ?", [id]);
+  return result.affectedRows;
 };
