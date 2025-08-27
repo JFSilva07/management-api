@@ -1,86 +1,51 @@
 import db from "../config/db.js";
 
-//Function to fetch all products.
-export const GetAllProducts = () => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM products";
-    db.query(sql, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
+//Todos os dados já estão validados na rota antes de chegar aqui.
+
+// Função pra buscar todos os produtos
+export const GetAllProducts = async () => {
+  const [rows] = await db.query("SELECT * FROM products");
+  return rows;
 };
 
-//Function to fecth product by ID.
-export const GetProductById = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM products WHERE id=?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
+// Função pra buscar produto por ID
+export const GetProductById = async (id) => {
+  const [rows] = await db.query("SELECT * FROM products WHERE id = ?", [id]);
+  return rows[0];
 };
 
-//Function to create new product.
-export const CreateProduct = ({
+// Função pra criar novo produto
+export const CreateProduct = async ({
   name,
   price,
   description,
   category,
   storage,
 }) => {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "INSERT INTO products (name, price , description, category, storage) VALUES (?, ?, ?, ?, ?)";
-    db.query(
-      sql,
-      [name, price, description, category, storage],
-      (error, results) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve(results.insertId);
-      }
-    );
-  });
+  const [result] = await db.query(
+    "INSERT INTO products (name, price, description, category, storage) VALUES (?, ?, ?, ?, ?)",
+    [name, price, description, category, storage]
+  );
+  return result.insertId;
 };
 
-//Function to update product by ID.
-export const updateProduct = (
-  id,
-  { name, price, description, category, storage }
-) => {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "UPDATE products SET name = ?, price = ?, description = ?, category = ?, storage= ? WHERE id = ?";
-    db.query(
-      sql,
-      [name, price, description, category, storage, id],
-      (error, results) => {
-        if (error) {
-          return reject(error);
-        }
-        resolve(results.affectedRows);
-      }
-    );
-  });
+// Função pra atualizar produto por ID (aceita campos opcionais)
+export const UpdateProduct = async (id, fields) => {
+  const keys = Object.keys(fields);
+  if (keys.length === 0) return 0;
+
+  const values = keys.map((key) => fields[key]);
+  const setString = keys.map((key) => `${key} = ?`).join(", ");
+
+  const [result] = await db.query(
+    `UPDATE products SET ${setString} WHERE id = ?`,
+    [...values, id]
+  );
+  return result.affectedRows;
 };
 
-//Function to delete product by ID. deleteProduct
-
-export const deleteProduct = (id) => {
-  return new Promise((resolve, reject) => {
-    const sql = "DELETE FROM products WHERE id = ?";
-    db.query(sql, [id], (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results.affectedRows);
-    });
-  });
+// Função pra deletar produto por ID
+export const DeleteProduct = async (id) => {
+  const [result] = await db.query("DELETE FROM products WHERE id = ?", [id]);
+  return result.affectedRows;
 };
