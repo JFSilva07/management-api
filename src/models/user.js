@@ -1,18 +1,19 @@
 import db from "../config/db.js";
+//Todos do dados já estão validados antes de chegar aqui
 
-// Buscar todos os usuários
+// Função pra buscar todos os usuários
 export const getAllUsers = async () => {
   const [rows] = await db.query("SELECT * FROM users");
   return rows;
 };
 
-// Buscar usuário por ID
+// Função pra buscar usuário por ID
 export const getUserById = async (id) => {
   const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
   return rows[0];
 };
 
-// Criar usuário
+// Função pra criar usuário
 export const createUser = async ({ name, email, password, number }) => {
   const [result] = await db.query(
     "INSERT INTO users (name, email, password, number) VALUES (?, ?, ?, ?)",
@@ -21,7 +22,7 @@ export const createUser = async ({ name, email, password, number }) => {
   return result.insertId;
 };
 
-// Atualizar usuário
+// Função pra atualizar usuário
 export const updateUser = async (id, fields) => {
   // Cria dinamicamente SET conforme os campos enviados
   const keys = Object.keys(fields);
@@ -37,7 +38,7 @@ export const updateUser = async (id, fields) => {
   return result.affectedRows;
 };
 
-// Deletar usuário
+//Função pra deletar usuário
 export const deleteUser = async (id) => {
   const [result] = await db.query("DELETE FROM users WHERE id = ?", [id]);
   return result.affectedRows;

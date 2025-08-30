@@ -44,7 +44,7 @@ export const userSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "O número deve conter apenas dígitos e ter 11 caracteres. Ex: 82 99999-9999.",
+        "O número deve conter apenas dígitos e ter 11 caracteres. Ex: 82999999999.",
       "any.required": "O número é obrigatório.",
     }),
 });

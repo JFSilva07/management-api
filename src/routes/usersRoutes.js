@@ -24,16 +24,15 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Rota para buscar usuário por ID
+// Rota para buscar usuário por ID, com validação de ID numérico
 router.get("/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ error: "ID de usuário inválido. Deve ser um número." });
+  }
   try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-      return res
-        .status(400)
-        .json({ error: "ID de usuário inválido. Deve ser um número." });
-    }
-
     const user = await getUserById(id);
     if (!user)
       return res.status(404).json({ error: "Usuário não encontrado." });
@@ -60,16 +59,16 @@ router.post("/", validate(userSchema), async (req, res) => {
   }
 });
 
-// Rota para atualizar usuário pelo ID
+// Rota para atualizar usuário pelo ID, com validação de ID numérico
 router.put("/:id", validate(userUpdateSchema), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-      return res
-        .status(400)
-        .json({ error: "ID de usuário inválido. Deve ser um número." });
-    }
+  const id = req.params.id;
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ error: "ID de usuário inválido. Deve ser um número." });
+  }
 
+  try {
     const affectedRows = await updateUser(id, req.body);
 
     if (affectedRows === 0) {
@@ -85,16 +84,15 @@ router.put("/:id", validate(userUpdateSchema), async (req, res) => {
   }
 });
 
-// Rota para deletar usuário pelo ID
+// Rota para deletar usuário pelo ID, com validação de ID numérico
 router.delete("/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ error: "ID de usuário inválido. Deve ser um número." });
+  }
   try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-      return res
-        .status(400)
-        .json({ error: "ID de usuário inválido. Deve ser um número." });
-    }
-
     const affectedRows = await deleteUser(id);
 
     if (affectedRows === 0) {

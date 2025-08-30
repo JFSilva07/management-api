@@ -12,12 +12,14 @@ const router = express.Router();
 // Route to Create new sale
 router.post("/", async (req, res) => {
   try {
-    const { customer_id, items } = req.body;
+    const { client_id, user_id, items } = req.body;
 
-    if (!customer_id) {
-      return res
-        .status(400)
-        .json({ error: "O campo customer_id é obrigatório" });
+    if (!client_id) {
+      return res.status(400).json({ error: "O campo client_id é obrigatório" });
+    }
+
+    if (!user_id) {
+      return res.status(400).json({ error: "O campo user_id é obrigatório" });
     }
 
     if (!items || items.length === 0) {
@@ -26,11 +28,23 @@ router.post("/", async (req, res) => {
         .json({ error: "A venda precisa ter ao menos um produto" });
     }
 
-    const saleId = await createSale(customer_id, items);
+    const sale = await createSale(client_id, user_id, items);
 
-    res.status(201).json({ message: "Venda criada com sucesso!", saleId });
+    res.status(201).json({ message: "Venda criada com sucesso!", sale });
   } catch (error) {
     console.error("Erro ao criar venda:", error);
+
+    // Captura erro de estoque insuficiente
+    if (error.message.startsWith("Estoque insuficiente")) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Captura erro de produto não encontrado
+    if (error.message.startsWith("Produto")) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Outros erros
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
@@ -75,13 +89,9 @@ router.put("/:id", async (req, res) => {
         .json({ error: "A venda precisa ter ao menos um produto" });
     }
 
-    const affectedRows = await updateSale(id, items);
+    const result = await updateSale(id, items);
 
-    if (affectedRows === 0) {
-      return res.status(404).json({ error: "Venda não encontrada" });
-    }
-
-    res.status(200).json({ message: "Venda atualizada com sucesso!" });
+    res.status(200).json(result);
   } catch (error) {
     console.error("Erro ao atualizar venda:", error);
     res.status(500).json({ error: "Erro interno do servidor" });
@@ -92,9 +102,9 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const affectedRows = await deleteSale(id);
+    const result = await deleteSale(id);
 
-    if (affectedRows === 0) {
+    if (!result.deleted) {
       return res.status(404).json({ error: "Venda não encontrada" });
     }
 

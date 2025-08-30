@@ -20,7 +20,8 @@ import {
 //Rota para buscar todos os produtos
 router.get("/", async (req, res) => {
   try {
-    const products = await GetAllProducts();
+    const onlyAvailable = req.query.available === "true";
+    const products = await GetAllProducts(onlyAvailable);
     res.status(200).json(products);
   } catch (error) {
     console.error("Erro ao buscar os produtos:", error);
